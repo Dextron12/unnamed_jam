@@ -15,7 +15,7 @@ if "%~1"=="" (
 
 set CMD=%1
 set BUILD_DIR=build
-set EXE=%BUILD_DIR%\MyProjectExe.exe
+set EXE=bin\Debug\unamed_jam.exe
 
 if /I "%CMD%"=="configure" (
     echo Configuring project...

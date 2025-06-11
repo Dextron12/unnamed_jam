@@ -1,9 +1,5 @@
 #include "Textures.hpp"
 
-void dummyTest() {
-    std::printf("TextureLoader.cpp is compiled\n");
-}
-
 Texture loadTexture(SDL_Renderer* renderer, const std::string& texturePath) {
     Texture obj;
 
@@ -27,4 +23,43 @@ Texture loadTexture(SDL_Renderer* renderer, const std::string& texturePath) {
     obj.tex.reset(texPtr);
 
     return obj;
+}
+
+Spritesheet::Spritesheet(SDL_Renderer* renderer, const std::string& texturePath) : renderer(renderer){
+    texture = std::make_unique<Texture>(loadTexture(renderer, texturePath));
+}
+
+void Spritesheet::pushSubTexture(const std::string& SubTextureName, int x, int y, int w, int h){
+    SDL_Rect px = SDL_Rect{x,y,w,h};
+    subTextures.emplace(SubTextureName, px);
+}
+
+void Spritesheet::pushSubTexture(const std::string& SubTextureName, SDL_Rect pxPos){
+    subTextures.emplace(SubTextureName, pxPos);
+}
+
+void Spritesheet::popSubTexture(const std::string& textureName){
+    subTextures.erase(textureName);
+}
+
+void Spritesheet::render(const std::string& name, SDL_Point destRect){
+    if (subTextures.count(name) != 0) {
+        SDL_Rect subR = subTextures[name];
+        SDL_Rect pos = SDL_Rect{ destRect.x, destRect.y, subR.w, subR.h };
+        SDL_RenderCopy(renderer, texture->tex.get(), &subR, &pos);
+    }
+    else {
+        std::printf("%s is not a valid subTexture", name.c_str());
+    }
+}
+
+void Spritesheet::renderEx(const std::string& name, SDL_Point destPos, float angle, SDL_RendererFlip flip){
+    if (subTextures.count(name) != 0) {
+        SDL_Rect subR = subTextures[name];
+        SDL_Rect pos = SDL_Rect{ destPos.x, destPos.y, subR.w, subR.h };
+        SDL_RenderCopyEx(renderer, texture->tex.get(), &subR, &pos, angle, NULL, flip);
+    }
+    else {
+        std::printf("%s is not a valid Subtexture", name.c_str());
+    }
 }

@@ -6,9 +6,8 @@
 
 #include <iostream>
 #include <string>
+#include <unordered_map>
 #include <memory>
-
-void dummyTest();
 
 class Texture {
 public:
@@ -17,6 +16,27 @@ public:
 
 	Texture() : tex(nullptr, SDL_DestroyTexture) {}
 
+};
+
+class Spritesheet{
+public:
+	std::shared_ptr<Texture> texture;
+
+	Spritesheet(SDL_Renderer* renderer, const std::string& texturePath);
+
+	void pushSubTexture(const std::string& SubTextureName, int x, int y, int w, int h);
+	void pushSubTexture(const std::string& SubTextureName, SDL_Rect pxPos);
+
+	void popSubTexture(const std::string& textureName);
+
+	void render(const std::string& SubTexture, SDL_Point destRect);
+	void renderEx(const std::string& SubTexture, SDL_Point destPos, float angle = 0.0f, SDL_RendererFlip flip = SDL_RendererFlip::SDL_FLIP_NONE);
+
+protected:
+	SDL_Renderer* renderer;
+
+	std::unordered_map<std::string, SDL_Rect> subTextures;
+	
 };
 
 // Loads a texture from a file.	

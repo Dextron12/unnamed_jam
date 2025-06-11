@@ -21,10 +21,15 @@ private:
 	float width = 800; float height = 600;
 	SDL_Event event;
 
+	Uint32 lastTime;
+	Uint32 currentTime;
+
 public:
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	bool appState = false;
+
+	Uint32 deltaTime;
 
 	Window(std::string windowTitle, float windowWidth, float windowHeight, SDL_WindowFlags windowFlags);
 	~Window();

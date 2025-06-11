@@ -35,6 +35,8 @@ Window::Window(std::string windowTitle, float windowWidth, float windowHeight, S
 	height = windowHeight;
 
 	appState = true;
+
+	lastTime = SDL_GetTicks();
 }
 
 Window::~Window() {
@@ -63,6 +65,11 @@ void Window::update() {
 			}
 		}
 	}
+
+	//Update dT
+	currentTime = SDL_GetTicks();
+	deltaTime = currentTime - lastTime;
+	lastTime = currentTime;
 }
 
 void VFS::init() {

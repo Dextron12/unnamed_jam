@@ -1,24 +1,4 @@
 cmake_minimum_required(VERSION 3.15)
-project(unamed_jam LANGUAGES CXX)
-
-#Use C++17 standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# Make bin/ the output dir for all build types
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-
-# Enable folders in IDEs like Visual Studio
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-
-#Add src and include dirs
-include_directories(${CMAKE_SOURCE_DIR}/include)
-
-# Collect all .cpp files from src/
-file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp)
-
-# Create the executable from source files
-add_executable(unamed_jam ${SOURCES})
 
 # Automatically use vcpkg toolchain if VCPKG_ROOT is set
 if (DEFINED ENV{VCPKG_ROOT})
@@ -27,23 +7,41 @@ if (DEFINED ENV{VCPKG_ROOT})
 		CACHE STRING "Vcpkg toolchain file")
 endif()
 
-# Example: link vcpkg packages (they must be installed)
-# find_package(fmt CONFIG REQUIRED)
-# target_link_libraries(MyProjectExe PRIVATE fmt::fmt)
+project(unamed_jam LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+# Collect all source files
+file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp)
+
+# Collect all headers for IDE organization
+file(GLOB_RECURSE HEADER_FILES
+    ${CMAKE_SOURCE_DIR}/include/*.h
+    ${CMAKE_SOURCE_DIR}/include/*.hpp
+)
+
+# Create the executable target (with source files only)
+add_executable(unamed_jam ${SOURCES})
+
+# Add headers to the target for IDE visibility
+target_sources(unamed_jam PRIVATE ${HEADER_FILES})
+
+# Add include directories for the target
+target_include_directories(unamed_jam PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 find_package(SDL2 CONFIG REQUIRED)
 find_package(SDL2_image CONFIG REQUIRED)
-# find_package(SDL2_ttf CONFIG REQUIRED)
-
-target_include_directories(unamed_jam PRIVATE ${CMAKE_SOURCE_DIR}/include)
-
-message(STATUS "SDL2_image lib path: ${VCPKG_ROOT}/installed/x64-windows/lib/SDL2_image.lib")
-message(STATUS "SDL2_ttf lib path: ${VCPKG_ROOT}/installed/x64-windows/lib/SDL2_ttf.lib")
-
+find_package(nlohmann_json CONFIG REQUIRED)
 
 target_link_libraries(unamed_jam PRIVATE
 	SDL2::SDL2 
 	SDL2::SDL2main
 	SDL2_image::SDL2_image
-	# SDL2_ttf::SDL2_ttf
+	nlohmann_json::nlohmann_json
 )
+
