@@ -1,0 +1,12 @@
+#Ignore everything in Assets/
+Assets/*
+
+#Except Animation Scripts Folder
+!Assets/Animation scripts/*
+
+#Ignore build artifacts
+build/
+bin/
+*.exe
+*.obj
+*.dll
