@@ -25,6 +25,20 @@ Texture loadTexture(SDL_Renderer* renderer, const std::string& texturePath) {
     return obj;
 }
 
+void TextureMngr::setRenderer(SDL_Renderer* rendererPtr) {
+    renderer = rendererPtr;
+}
+
+void TextureMngr::unload(const std::string& textureID) {
+    if (textures.find(textureID) == textures.end()) {
+        //No need to output a warning. The end-user is expecting the texture to be removed anyway.
+        return;
+    }
+
+    textures.erase(textureID); // Does the internal SDL_Texture get freed by Texture destructor?
+    return;
+}
+
 Spritesheet::Spritesheet(SDL_Renderer* renderer, const std::string& texturePath) : renderer(renderer){
     texture = std::make_unique<Texture>(loadTexture(renderer, texturePath));
 }

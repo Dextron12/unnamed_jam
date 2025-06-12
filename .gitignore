@@ -2,7 +2,8 @@
 Assets/*
 
 #Except Animation Scripts Folder
-!Assets/Animation scripts/*
+!Assets/Animation scripts/
+!Assets/Animation scripts/**
 
 #Ignore build artifacts
 build/

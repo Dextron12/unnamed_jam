@@ -18,6 +18,18 @@ public:
 
 };
 
+class TextureMngr {
+public:
+
+	//Either returns a laoded texture object, if not loaded, will lazy laod the texture (searches in Assets/) if no texture can be located it will return nullptr
+	static std::shared_ptr<Texture> resolve(const std::string& relPath);
+
+	static void unload(const std::string& textureID);
+
+protected:
+	std::unordered_map<std::string, std::shared_ptr<Texture>> textures;
+};
+
 class Spritesheet{
 public:
 	std::shared_ptr<Texture> texture;
