@@ -8,7 +8,7 @@ SDL_RendererFlip flipFromString(const std::string& str) {
 
 }
 
-SpriteAnimation::SpriteAnimation(SDL_Renderer* renderer, const std::string& texturePath) : Spritesheet(renderer, texturePath), timer(Timer(0.0)), currentAnimation(std::string("")) {}
+SpriteAnimation::SpriteAnimation(SDL_Renderer* renderer, const std::string& spriteID, const std::string& texturePath) : Spritesheet(renderer, spriteID, texturePath), timer(Timer(0.0)), currentAnimation(std::string("")) {}
 
 void SpriteAnimation::addAnimation(const std::string& name, const std::vector<AnimationFrame>& frames) {
 	if (m_frames.find(name) != m_frames.end()) {
@@ -31,12 +31,14 @@ void SpriteAnimation::remAnimation(const std::string& name) {
 	}
 }
 
-void SpriteAnimation::play(const SDL_Point& pos) {
+void SpriteAnimation::play(const SDL_Point& pos, std::optional<std::string> spriteID) {
 	auto it = m_frames.find(currentAnimation);
 	if (it == m_frames.end()) {
 		//std::printf("Animation '%s' not found!\n", currentAnimation.c_str());
 		return;
 	}
+
+	std::string texID = resolveSpriteID(spriteID);
 
 	const auto& frames = it->second;
 
@@ -56,7 +58,8 @@ void SpriteAnimation::play(const SDL_Point& pos) {
 	const SDL_Rect destRect{ pos.x, pos.y, srcRect.w, srcRect.h };
 
 	//Render sprite
-	SDL_RenderCopyEx(renderer, texture->tex.get(), &srcRect, &destRect, NULL, NULL, frame.flip);
+	auto tex = TextureMngr::resolve(renderer, texID, "");
+	SDL_RenderCopyEx(renderer, tex->tex, &srcRect, &destRect, NULL, NULL, frame.flip);
 
 	//Advance to next frame if timer has expired
 	if (isPlaying && timer.isFinished()) {
@@ -166,7 +169,7 @@ void loadAnimationsFromJSON(const std::string& jsonPath, SpriteAnimation& anim) 
 	}
 }
 
-AnimatedPlayer::AnimatedPlayer(SDL_Renderer* renderer, const std::string& spritePath, SDL_FPoint initPos) : SpriteAnimation(renderer, spritePath), pos({ initPos.x, initPos.y, 0.0f, 0.0f }) {
+AnimatedPlayer::AnimatedPlayer(SDL_Renderer* renderer, const std::string& spriteID, const std::string& spritePath, SDL_FPoint initPos) : SpriteAnimation(renderer, spriteID, spritePath), pos({ initPos.x, initPos.y, 0.0f, 0.0f }) {
 }
 
 void AnimatedPlayer::initAnimations(const std::string& AnimScript) {

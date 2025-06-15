@@ -87,6 +87,7 @@ void VFS::init() {
 	// Suggested: Other OS operations to get execPath, if OS not known, it defaults to argv[0]
 }
 
+// Resolves relative paths into absolute paths. Returns an empty path on failure.
 std::filesystem::path VFS::resolve(const std::string& relativePath) {
 	std::filesystem::path abs;
 	try {

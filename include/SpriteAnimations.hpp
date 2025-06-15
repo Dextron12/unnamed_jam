@@ -27,7 +27,7 @@ SDL_RendererFlip flipFromString(const std::string& str);
 class SpriteAnimation : public Spritesheet {
 public:
 
-	SpriteAnimation(SDL_Renderer* renderer, const std::string& texturePath);
+	SpriteAnimation(SDL_Renderer* renderer, const std::string& spriteID, const std::string& texturePath);
 
 	void addAnimation(const std::string& name, const std::vector<AnimationFrame>& frames);
 	void remAnimation(const std::string& name);
@@ -38,7 +38,7 @@ public:
 	void resume();
 
 	//By default plays an animation on loop.
-	void play(const SDL_Point& pos);
+	void play(const SDL_Point& pos, std::optional<std::string> = std::nullopt);
 
 
 protected:
@@ -58,7 +58,7 @@ void loadAnimationsFromJSON(const std::string& jsonPath, SpriteAnimation& anim);
 
 class AnimatedPlayer : public SpriteAnimation {
 public:
-	AnimatedPlayer(SDL_Renderer* renderer, const std::string& spriteSheet, SDL_FPoint initPos);
+	AnimatedPlayer(SDL_Renderer* renderer, const std::string& spriteID, const std::string& spriteSheet, SDL_FPoint initPos);
 
 	void update(const Uint32& deltaTime);
 	void render(const std::string& animID);

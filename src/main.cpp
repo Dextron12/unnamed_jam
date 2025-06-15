@@ -10,15 +10,17 @@ int main(int argc, char* argv[]) {
 
 	VFS::init();
 
-	Spritesheet grass(win.renderer, VFS::resolve("/Assets/Tiles/Grass/Grass_Tiles_3.png").string());
+	Spritesheet grass(win.renderer, "grass", VFS::resolve("/Assets/Tiles/Grass/Grass_Tiles_3.png").string());
+	grass.addSpritesheet(win.renderer, "grass_middle", VFS::resolve("/Assets/Tiles/Grass/grass_middle_decor.png").string());
 	grass.pushSubTexture("grassHole", {0,0,48,48});
 	grass.pushSubTexture("grass", { 48,0,16,16 });
+	//grass.pushSubTexture("grass_middle", { 0,0,256,256 });
 
-	SpriteAnimation player(win.renderer, VFS::resolve("/Assets/Player/Player_Static/Player_New/Player_Anim/Player_Idle_Run_Death_Anim.png").string());
+	SpriteAnimation player(win.renderer, "playerSprite", VFS::resolve("/Assets/Player/Player_Static/Player_New/Player_Anim/Player_Idle_Run_Death_Anim.png").string());
 	loadAnimationsFromJSON(VFS::resolve("/Assets/Animation scripts/Player/Player_idle.json").string(), player);
 
 
-	AnimatedPlayer pT(win.renderer, VFS::resolve("/Assets/Player/Player_Static/Player_New/Player_Anim/Player_Idle_Run_Death_Anim.png").string(), { 250.0f, 150.0f });
+	AnimatedPlayer pT(win.renderer, "playerSprite", VFS::resolve("/Assets/Player/Player_Static/Player_New/Player_Anim/Player_Idle_Run_Death_Anim.png").string(), {250.0f, 150.0f});
 	pT.initAnimations(VFS::resolve("/Assets/Animation scripts/Player/Player_idle.json").string());
 
 	std::string currentAnim = "look_around";
@@ -54,20 +56,45 @@ int main(int argc, char* argv[]) {
 	std::mt19937 rng(rd());
 	std::uniform_int_distribution<int> dist(0, idleAnims.size() - 1);
 
+
+	auto checkered = createFallbackTexture(win.renderer, 32, 32);
+	SDL_Rect checkeredPos{ 300,300,checkered->w, checkered->h };
+
+
+	if(TextureMngr::textures.find("grass_middle") != TextureMngr::textures.end()) {
+
+	}
+
+	int count = 0;
+	for (const auto& it : TextureMngr::textures) {
+		std::printf("[DEBUG]: Loaded Texture %i, name: %s.", count, it.first.c_str());
+		if (it.second->tex == nullptr) {
+			std::printf("Texture is invalid!\n");
+		}
+		else {
+			std::printf("Texture valid\n");
+		}
+		count++;
+	}
+
 	while (win.appState) {
 		win.update();
 		SDL_SetRenderDrawColor(win.renderer, 0, 0, 0, 255);
 		SDL_RenderClear(win.renderer);
 
-		pT.update(win.deltaTime);
+		//pT.update(win.deltaTime);
 
-		grass.render("grassHole", { 200,150 });
+		//SDL_RenderCopy(win.renderer, checkered->tex, NULL, &checkeredPos);
+		SDL_RenderCopy(win.renderer, TextureMngr::textures["grass_middle"]->tex, NULL, &checkeredPos);
 
-		for (int x = 0; x <= 10; x++) {
+		//grass.render("grassHole", { 200,150 });
+		grass.render("grass_middle", { 150,300 });
+
+		/*for (int x = 0; x <= 10; x++) {
 			for (int y = 0; y <= 10; y++) {
-				grass.render("grass", { x * 16, y * 16 });
+				grass.render("grass_middle", { x * 16, y * 16 }, "grass_middle");
 			}
-		}
+		}*/
 
 		if (swap.isFinished()) {
 			std::string nextAnim = idleAnims[dist(rng)];
@@ -82,9 +109,9 @@ int main(int argc, char* argv[]) {
 		}
 
 
-		player.play({ 200, 150 });
+		//player.play({ 200, 150 });
 
-		pT.render("");
+		//pT.render("");
 
 		SDL_RenderPresent(win.renderer);
 	}
