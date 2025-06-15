@@ -152,15 +152,10 @@ Spritesheet::Spritesheet(SDL_Renderer* renderer, const std::string& texID, const
 }
 
 std::string Spritesheet::resolveSpriteID(std::optional<std::string> ID) {
-    if (ID.has_value()) {
-        return ID.value();
-    }
-    else {
-        if (textureIDs.size() != 0) {
-            return textureIDs[0];
-        }
-    }
+    return ID.value_or(textureIDs.empty() ? "" : textureIDs[0]);
 }
+
+
 
 void Spritesheet::addSpritesheet(SDL_Renderer* renderer, std::optional<std::string> textureID, std::optional<std::string> texturePath) {
     if (textureID.has_value()) {
@@ -223,51 +218,63 @@ void Spritesheet::popSubTexture(const std::string& textureName){
     subTextures.erase(textureName);
 }
 
-void Spritesheet::render(const std::string& name, SDL_Point destRect, std::optional<std::string> spriteID){
+void Spritesheet::render(const std::string& name, SDL_Point destRect){
 
     // Allow end-user to change spritesheets. There is no check for subTextures, so the end-suer needs to eb careful to choose the right one for the spriteID
 
-    std::string texID = resolveSpriteID(spriteID);
+    std::string texID = resolveSpriteID(std::make_optional(name));
 
     // Render a part of the requested spritesheet, no attempt is made by the program to ensure subTextures are rendered per their given spritesheet, sot eh end-user must eb careful if using mutliple spritesheets in one object.
 
-    if (subTextures.count(name) != 0) {
-        SDL_Rect subR = subTextures[name];
-        SDL_Rect pos = { destRect.x, destRect.y, subR.w, subR.h };
-
-        std::cout << texID << std::endl;
-
-        // Both addSpritesheet and Spritesheet initialiser ensures a texture exists for the given ID. But jsut in case we try tore solve again
-        auto tex = TextureMngr::resolve(renderer, texID, "");
-
-        // Render fall-back texture if texture obj is invalid
-        if (tex == nullptr) {
-            if (TextureMngr::checkeredTexture == nullptr) {
-                // generate one
-                tex = createFallbackTexture(renderer, 32, 32);
-            }
-            else {
-                tex = TextureMngr::checkeredTexture;
-            }
+    // This function assumes, the end-user knows what they are doing. There are no checks to see if the user is rendering the correct sprite, other than blindly rendering the requested sprite.
+    // All textures run through the texture resolve protocol and are either erused or lazy-laoded if the texture has sicne been dumped. On failure of lazy-laod a fallback checkered texture is used.
+    auto& tex = TextureMngr::resolve(renderer, texID, "");
+    if (tex == nullptr) {
 #ifdef _DEBUG
-            std::printf("[DEBUG_STATUS]: Ussing fall-back texture for sprite(sheet) '%s\n", texID.c_str());
+        std::printf("[DEBUG]: The texture '%s' is invalid\n", texID.c_str());
+        return;
 #endif
-        }
-
-        std::cout << subR.x << ", " << subR.y << ", " << subR.w << ", " << subR.h << std::endl;
-        std::cout << pos.x << ", " << pos.y << ", " << pos.w << ", " << pos.h << std::endl;
-
-        //Render Texture
-        SDL_RenderCopy(renderer, tex->tex, &subR, &pos);
     }
+
+    if (tex->tex == nullptr) {
+#ifdef _DEBUG 
+        std::printf("Failed to resolve texture: '%s'. Defaulting to fallback texture\n", texID.c_str());
+        
+        //Check fi a fallback texture has already been generatied, if not, generate.
+        if (TextureMngr::checkeredTexture == nullptr) {
+            TextureMngr::checkeredTexture = createFallbackTexture(renderer, 32, 32);
+        }
+        tex = TextureMngr::checkeredTexture;
+#endif
+    }
+
+    const SDL_Rect* subR;
+    SDL_Rect pos;
+    
+    auto it = subTextures.find(name);
+    if (it != subTextures.end()) {
+            // A subtexture exists, assign it
+            subR = &it->second;
+            pos = { destRect.x, destRect.y, subR->w, subR->h };
+            std::cout << "Running subTexture routine" << std::endl;
+    }
+    else {
+        // No subTexture, use full sprite surface
+        subR = nullptr;
+        pos = { destRect.x, destRect.y, (int)tex->w, (int)tex->h };
+    }
+
+    SDL_RenderCopy(renderer, tex->tex, subR, &pos);
+
 }
 
-void Spritesheet::renderEx(const std::string& name, SDL_Point destPos, std::optional<std::string> spriteID, float angle, SDL_RendererFlip flip){
-    std::string texID = resolveSpriteID(spriteID);
+void Spritesheet::renderEx(const std::string& name, SDL_Point destPos, float angle, SDL_RendererFlip flip){
+    std::string texID = resolveSpriteID(std::make_optional(name));
 
     if (subTextures.count(name) != 0) {
         SDL_Rect subR = subTextures[name];
         SDL_Rect pos = { destPos.x, destPos.y, subR.x, subR.y };
+
 
         auto tex = TextureMngr::resolve(nullptr, texID, "");
 

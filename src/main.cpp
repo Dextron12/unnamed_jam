@@ -60,11 +60,6 @@ int main(int argc, char* argv[]) {
 	auto checkered = createFallbackTexture(win.renderer, 32, 32);
 	SDL_Rect checkeredPos{ 300,300,checkered->w, checkered->h };
 
-
-	if(TextureMngr::textures.find("grass_middle") != TextureMngr::textures.end()) {
-
-	}
-
 	int count = 0;
 	for (const auto& it : TextureMngr::textures) {
 		std::printf("[DEBUG]: Loaded Texture %i, name: %s.", count, it.first.c_str());
@@ -85,7 +80,6 @@ int main(int argc, char* argv[]) {
 		//pT.update(win.deltaTime);
 
 		//SDL_RenderCopy(win.renderer, checkered->tex, NULL, &checkeredPos);
-		SDL_RenderCopy(win.renderer, TextureMngr::textures["grass_middle"]->tex, NULL, &checkeredPos);
 
 		//grass.render("grassHole", { 200,150 });
 		grass.render("grass_middle", { 150,300 });

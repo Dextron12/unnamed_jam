@@ -58,8 +58,8 @@ public:
 
 	void popSubTexture(const std::string& textureName);
 
-	virtual void render(const std::string& SubTexture, SDL_Point destRect, std::optional<std::string> spriteID = std::nullopt);
-	virtual void renderEx(const std::string& SubTexture, SDL_Point destPos, std::optional<std::string> spriteID = std::nullopt, float angle = 0.0f, SDL_RendererFlip flip = SDL_RendererFlip::SDL_FLIP_NONE);
+	virtual void render(const std::string& SubTexture, SDL_Point destRect);
+	virtual void renderEx(const std::string& SubTexture, SDL_Point destPos, float angle = 0.0f, SDL_RendererFlip flip = SDL_RendererFlip::SDL_FLIP_NONE);
 
 	virtual ~Spritesheet() = default;
 
