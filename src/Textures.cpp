@@ -218,11 +218,19 @@ void Spritesheet::popSubTexture(const std::string& textureName){
     subTextures.erase(textureName);
 }
 
-void Spritesheet::render(const std::string& name, SDL_Point destRect){
+void Spritesheet::render(const std::string& name, SDL_Point destRect, std::optional<std::string> spriteID){
 
     // Allow end-user to change spritesheets. There is no check for subTextures, so the end-suer needs to eb careful to choose the right one for the spriteID
 
-    std::string texID = resolveSpriteID(std::make_optional(name));
+    std::string texID;
+    if (spriteID == std::nullopt) {
+        //No spriteID specified, use default
+        texID = resolveSpriteID(spriteID);
+    }
+    else {
+        texID = resolveSpriteID(name);
+    }
+
 
     // Render a part of the requested spritesheet, no attempt is made by the program to ensure subTextures are rendered per their given spritesheet, sot eh end-user must eb careful if using mutliple spritesheets in one object.
 
@@ -256,7 +264,6 @@ void Spritesheet::render(const std::string& name, SDL_Point destRect){
             // A subtexture exists, assign it
             subR = &it->second;
             pos = { destRect.x, destRect.y, subR->w, subR->h };
-            std::cout << "Running subTexture routine" << std::endl;
     }
     else {
         // No subTexture, use full sprite surface
@@ -268,8 +275,8 @@ void Spritesheet::render(const std::string& name, SDL_Point destRect){
 
 }
 
-void Spritesheet::renderEx(const std::string& name, SDL_Point destPos, float angle, SDL_RendererFlip flip){
-    std::string texID = resolveSpriteID(std::make_optional(name));
+void Spritesheet::renderEx(const std::string& name, SDL_Point destPos, std::optional<std::string> spriteID, float angle, SDL_RendererFlip flip){
+    std::string texID = resolveSpriteID(spriteID);
 
     if (subTextures.count(name) != 0) {
         SDL_Rect subR = subTextures[name];

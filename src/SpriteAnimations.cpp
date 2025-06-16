@@ -8,6 +8,41 @@ SDL_RendererFlip flipFromString(const std::string& str) {
 
 }
 
+
+// Camera class (A 2D blackbox style camera)
+Camera::Camera(float x, float y) : pos{ x,y } {}
+
+void Camera::move(float dx, float dy) {
+	pos.x += dx;
+	pos.y += dy;
+}
+
+void Camera::setPosition(float x, float y) {
+	pos.x = x;
+	pos.y = y;
+}
+
+SDL_Point Camera::worldToScreen(const SDL_FPoint& worldPos) const {
+	//return SDL_Point{ static_cast<int>(worldPos.x - pos.x), static_cast<int>(worldPos.y - pos.y) };
+	float screenX = worldPos.x - pos.x;
+	float screenY = worldPos.y - pos.y;
+
+	screenX = std::clamp(screenX, -1000000.0f, 1000000.0f);
+	screenY = std::clamp(screenY, -1000000.0f, 1000000.0f);
+
+#ifdef _DEBUG
+	if (!std::isfinite(screenX)) {
+		//std::cerr << "Bad screenX: " << screenX << " | world: " << worldPos.x << " | camera: " << pos.x << "\n";
+	}
+#endif
+
+	return SDL_Point{ static_cast<int>(screenX), static_cast<int>(screenY) };
+}
+
+SDL_FPoint Camera::screenToWorld(const SDL_Point& screen) const {
+	return { screen.x + pos.x, screen.y + pos.y };
+}
+
 SpriteAnimation::SpriteAnimation(SDL_Renderer* renderer, const std::string& spriteID, const std::string& texturePath) : Spritesheet(renderer, spriteID, texturePath), timer(Timer(0.0)), currentAnimation(std::string("")) {}
 
 void SpriteAnimation::addAnimation(const std::string& name, const std::vector<AnimationFrame>& frames) {
@@ -56,6 +91,8 @@ void SpriteAnimation::play(const SDL_Point& pos, std::optional<std::string> spri
 	//Src & destRect's
 	const SDL_Rect& srcRect = frame.rect;
 	const SDL_Rect destRect{ pos.x, pos.y, srcRect.w, srcRect.h };
+
+	//std::cout << pos.x << ", " << pos.y << std::endl;
 
 	//Render sprite
 	auto tex = TextureMngr::resolve(renderer, texID, "");
@@ -210,16 +247,32 @@ void AnimatedPlayer::update(const Uint32& deltaTime) {
 	}
 
 	//Normalise acceleration then multiply by speed
-	float accelFactor = 0.0006f;
-	velocityVec.x += acceleration.x * accelFactor * deltaTime;
-	velocityVec.y += acceleration.y * accelFactor * deltaTime;
+	velocityVec.x += acceleration.x * accelFactor * (deltaTime / 1000.0f);
+	velocityVec.y += acceleration.y * accelFactor * (deltaTime / 1000.0f);
+
+	//std::cout << "Acceleration.x: " << acceleration.x << ", accelFactor: " << accelFactor << ", deltaTime(sec): " << deltaTime / 1000.0f << std::endl;
 
 	//Dampen movement
 	velocityVec.x *= 0.85f;
 	velocityVec.y *= 0.85f;
 
-	pos.x += velocityVec.x * deltaTime;
-	pos.y += velocityVec.y * deltaTime;
+	// Clamp the velocity to a max speed
+	float speed = std::sqrt(velocityVec.x * velocityVec.x + velocityVec.y * velocityVec.y);
+	if (speed > maxSpeed) {
+		float scale = maxSpeed / speed;
+		velocityVec.x *= scale;
+		velocityVec.y *= scale;
+	}
+
+	if (std::abs(velocityVec.x) < 0.01) velocityVec.x = 0.0f;
+	if (std::abs(velocityVec.y) < 0.01) velocityVec.y = 0.0f;
+
+	//std::cout << "Before Update: pos.x = " << pos.x << ", velocityVec.x = " << velocityVec.x << std::endl;
+
+	pos.x += velocityVec.x * (deltaTime / 1000.0f);
+	pos.y += velocityVec.y * (deltaTime / 1000.0f);
+
+	//std::cout << "After Update: pos.x = " << pos.x << ", velocityVec.x = " << velocityVec.x << std::endl;
 
 	bool moving = (acceleration.x != 0 || acceleration.y != 0);
 
@@ -255,7 +308,9 @@ void AnimatedPlayer::update(const Uint32& deltaTime) {
 	}
 }
 
-void AnimatedPlayer::render(const std::string& animID) {
-
-	play({ (int)pos.x, (int)pos.y });
+void AnimatedPlayer::render(const Camera& camera) {
+	//std::cout << "WorldPos: " << pos.x << ", " << pos.y << std::endl;
+	SDL_Point screenPos = camera.worldToScreen({ pos.x, pos.y });
+	//std::cout << "ScreenPos: " << screenPos.x << ", " << screenPos.y << std::endl;
+	play(screenPos);  // Renders the correct screen-space position
 }

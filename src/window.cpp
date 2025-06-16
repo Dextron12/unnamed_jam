@@ -46,6 +46,8 @@ Window::~Window() {
 }
 
 void Window::update() {
+	//Reste flags
+	windowResized = false;
 	while (SDL_PollEvent(&event)) {
 
 		if (event.type == SDL_QUIT) {
@@ -62,6 +64,7 @@ void Window::update() {
 			if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
 				width = event.window.data1;
 				height = event.window.data2;
+				windowResized = true;
 			}
 		}
 	}

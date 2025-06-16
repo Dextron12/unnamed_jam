@@ -18,7 +18,6 @@ enum PathType {
 
 class Window {
 private:
-	float width = 800; float height = 600;
 	SDL_Event event;
 
 	Uint32 lastTime;
@@ -28,6 +27,8 @@ public:
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	bool appState = false;
+	bool windowResized = false;
+	float width; float height;
 
 	Uint32 deltaTime;
 

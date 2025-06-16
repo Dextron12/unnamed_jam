@@ -24,6 +24,25 @@ enum Direction {
 
 SDL_RendererFlip flipFromString(const std::string& str);
 
+// A 2D-blackbox style camera
+class Camera {
+public:
+	SDL_FPoint pos = { 0,0 };		// camera position in world space (top-left corner of viewport)
+
+	Camera(float x = 0.0f, float y = 0.0f);
+
+	// Move camera by delta (for smooth movement)
+	void move(float dx, float dy);
+
+	void setPosition(float x, float y);
+
+	//Convert world position to screen position given camera offset.
+	SDL_Point worldToScreen(const SDL_FPoint& worldPos) const;
+
+	// Convert screen position to world
+	SDL_FPoint screenToWorld(const SDL_Point& screen) const;
+};
+
 class SpriteAnimation : public Spritesheet {
 public:
 
@@ -61,16 +80,18 @@ public:
 	AnimatedPlayer(SDL_Renderer* renderer, const std::string& spriteID, const std::string& spriteSheet, SDL_FPoint initPos);
 
 	void update(const Uint32& deltaTime);
-	void render(const std::string& animID);
+	void render(const Camera& camera);
 
 	void initAnimations(const std::string& AnimScript);
 
-	SDL_FPoint mapOffset; // Camera offset.
+	SDL_FRect pos = { 0, 0, 0, 0};
 
 protected:
-	SDL_FRect pos;
 
 	SDL_FPoint velocityVec = { 0,0 };
+
+	const float maxSpeed = 800.0f;
+	const float accelFactor = 800.0f;
 
 	Direction facing = UP;
 
