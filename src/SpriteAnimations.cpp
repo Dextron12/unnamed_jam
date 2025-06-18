@@ -69,7 +69,7 @@ void SpriteAnimation::remAnimation(const std::string& name) {
 void SpriteAnimation::play(const SDL_Point& pos, std::optional<std::string> spriteID) {
 	auto it = m_frames.find(currentAnimation);
 	if (it == m_frames.end()) {
-		//std::printf("Animation '%s' not found!\n", currentAnimation.c_str());
+		std::printf("Animation '%s' not found!\n", currentAnimation.c_str());
 		return;
 	}
 
@@ -85,17 +85,21 @@ void SpriteAnimation::play(const SDL_Point& pos, std::optional<std::string> spri
 
 	const AnimationFrame& frame = frames[currentFrame];
 
+	//std::cout << "CurrentFrame: " << currentFrame << " spriteID: " << texID << std::endl;
+
 	//Sync timer to this frames duration.
 	timer.setDuration(frame.duration);
 
 	//Src & destRect's
 	const SDL_Rect& srcRect = frame.rect;
+	//std::cout << "x: " << srcRect.x << "y: " << srcRect.y << "w: " << srcRect.w << "h: " << srcRect.h << std::endl;
 	const SDL_Rect destRect{ pos.x, pos.y, srcRect.w, srcRect.h };
 
 	//std::cout << pos.x << ", " << pos.y << std::endl;
 
 	//Render sprite
 	auto tex = TextureMngr::resolve(renderer, texID, "");
+	//std::cout << "sprite anim address: " << tex << std::endl;
 	SDL_RenderCopyEx(renderer, tex->tex, &srcRect, &destRect, NULL, NULL, frame.flip);
 
 	//Advance to next frame if timer has expired
@@ -123,8 +127,8 @@ void SpriteAnimation::setAnimation(const std::string& name, bool resetFrame, boo
 		currentAnimation = name;
 		if (resetFrame) {
 			currentFrame = 0;
+			timer.reset();
 		}
-		timer.reset();
 		isLooping = loop;
 	}
 

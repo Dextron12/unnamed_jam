@@ -1,14 +1,24 @@
 #include "window.hpp"
 
+int LOGICAL_WIDTH = 1280;
+int LOGICAL_HEIGHT = 720;
+
 std::filesystem::path VFS::basePath;
 
-Window::Window(std::string windowTitle, float windowWidth, float windowHeight, SDL_WindowFlags windowFlags) {
+WindowContext::WindowContext(std::string windowTitle, SDL_Point windowSize, SDL_WindowFlags windowFlags, const SDL_Point logicalWindowSize) {
+	// Set Logical window sizes:
+	LOGICAL_WIDTH = logicalWindowSize.x;
+	LOGICAL_HEIGHT = logicalWindowSize.y;
+	//Set window size
+	width = windowSize.x;
+	height = windowSize.y;
+
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
 		std::cerr << "Failed to init SDL2" << SDL_GetError() << std::endl;
 		return;
 	}
 
-	window = SDL_CreateWindow(windowTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, windowFlags);
+	window = SDL_CreateWindow(windowTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, windowFlags);
 	if (!window) {
 		std::cerr << "Failed to create a SDL window" << SDL_GetError() << std::endl;
 		return;
@@ -21,7 +31,7 @@ Window::Window(std::string windowTitle, float windowWidth, float windowHeight, S
 	}
 
 	//Render controls
-	SDL_RenderSetLogicalSize(renderer, windowWidth, windowHeight);
+	//SDL_RenderSetLogicalSize(renderer, windowWidth, windowHeight);
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0"); // no smoothing (pixel perfect)
 	SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
 
@@ -31,21 +41,26 @@ Window::Window(std::string windowTitle, float windowWidth, float windowHeight, S
 		return;
 	}
 
-	width = windowWidth;
-	height = windowHeight;
+	// Set vrtScreen prop:
+	virtScreen = SDL_CreateTexture(renderer,
+		SDL_PIXELFORMAT_RGBA8888,
+		SDL_TEXTUREACCESS_TARGET,
+		LOGICAL_WIDTH, LOGICAL_HEIGHT);
 
 	appState = true;
 
 	lastTime = SDL_GetTicks();
 }
 
-Window::~Window() {
+WindowContext::~WindowContext() {
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 }
 
-void Window::update() {
+void WindowContext::startFrame() {
+	// Chnage the render tartext to virtual atrget
+	SDL_SetRenderTarget(renderer, virtScreen);
 	//Reste flags
 	windowResized = false;
 	while (SDL_PollEvent(&event)) {
@@ -71,8 +86,33 @@ void Window::update() {
 
 	//Update dT
 	currentTime = SDL_GetTicks();
-	deltaTime = currentTime - lastTime;
+	deltaTime = (currentTime - lastTime) / 1000.0f; // for heavens sakes, keep this in seconds. Physics relies on it being ins econds!
 	lastTime = currentTime;
+}
+
+void WindowContext::endFrame() {
+	// Rendering should have stoppeed. Change atrgets
+	SDL_SetRenderTarget(renderer, nullptr);
+	SDL_RenderClear(renderer); //Clear the renderer in case of un-initalised pixels ona  window resize!
+
+	// Calculate scale to fill window completely without letterboxxing (may crop)
+	float scaleX = (float)width / LOGICAL_WIDTH;
+	float scaleY = (float)height / LOGICAL_HEIGHT;
+	float scale = std::max<float>(scaleX, scaleY);
+
+	int destW = (int)(LOGICAL_WIDTH * scale);
+	int destH = (int)(LOGICAL_HEIGHT * scale);
+
+	SDL_Rect destRect;
+	destRect.x = (width - destW) / 2; // centers horizontally (negative values crop)
+	destRect.y = (height - destH) / 2; // centers vertically (negative valeus crop)
+
+	destRect.w = destW;
+	destRect.h = destH;
+
+	// Render the scaled texture tot he window
+	SDL_RenderCopy(renderer, virtScreen, nullptr, &destRect);
+	SDL_RenderPresent(renderer);
 }
 
 void VFS::init() {
